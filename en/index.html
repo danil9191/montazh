@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danil — shorts editor: podcast clips and talking-head reels</title>
+<meta name="description" content="I cut podcasts and talking-head videos into shorts people watch to the end: hook in the first seconds, word-by-word captions, motion text that shows what is said.">
+<meta property="og:title" content="Danil — shorts editor">
+<meta property="og:description" content="Podcast moments cut into shorts people finish. Free test short on your footage.">
+<meta property="og:image" content="../media/en1.jpg">
+<link rel="alternate" hreflang="ru" href="../">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="theme-color" content="#15171D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E8ECF1;      /* стол, на котором лежат экраны */
+  --sheet:#FFFFFF;
+  --ink:#15171D;
+  --mute:#5D6573;
+  --line:#C9D0DA;
+  --cap:#FFDD2D;        /* жёлтая плашка субтитра */
+  --blue:#2740F5;
+  --r-screen:22px;
+  --wrap:1180px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.55 Onest,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+img,video{display:block;max-width:100%}
+a{color:inherit}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+h1,h2{font-family:Unbounded,Onest,sans-serif;margin:0;letter-spacing:-.02em}
+h2{font-weight:600;font-size:clamp(24px,3.2vw,36px);line-height:1.15}
+p{margin:0}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:6px}
+
+/* шапка */
+.top{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+.name{font-family:Unbounded,sans-serif;font-weight:600;font-size:16px;text-decoration:none}
+.top nav{display:flex;gap:26px;font-size:15px}
+.top nav a{text-decoration:none;color:var(--mute)}
+.top nav a:hover{color:var(--ink)}
+
+/* кнопка */
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;font-size:17px;padding:16px 26px;border-radius:14px;transition:transform .15s,background .15s}
+.btn:hover{background:#1B30D0;transform:translateY(-1px)}
+.btn svg{width:20px;height:20px;fill:currentColor}
+
+/* первый экран */
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:56px;align-items:center;padding:36px 0 72px}
+h1{font-weight:800;font-size:clamp(34px,5.6vw,74px);line-height:1.12}
+h1 .w{display:inline-block;padding:0 .14em;margin:0 -.14em;border-radius:.16em;transition:background .12s}
+h1 .w.on{background:var(--cap)}
+.lead{font-size:clamp(18px,1.6vw,21px);max-width:30em;margin:26px 0 32px;color:#2B2F38}
+.hero-cta{display:flex;flex-wrap:wrap;align-items:center;gap:18px}
+.hero-cta span{color:var(--mute);font-size:15px;max-width:16em;line-height:1.35}
+
+/* экран с роликом */
+.screen{position:relative;aspect-ratio:9/16;border-radius:var(--r-screen);overflow:hidden;background:#000;box-shadow:0 1px 0 #fff inset,0 24px 50px -22px rgba(21,23,29,.55)}
+.screen video,.screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.player .hit{position:absolute;inset:0;width:100%;border:0;padding:0;background:none;cursor:pointer}
+.play{position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:8px;background:rgba(21,23,29,.72);backdrop-filter:blur(6px);color:#fff;font:500 14px/1 Onest,sans-serif;padding:9px 13px 9px 11px;border-radius:999px;pointer-events:none}
+.play i{width:0;height:0;border-left:10px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.prog{position:absolute;top:10px;left:12px;right:12px;height:3px;border-radius:3px;background:rgba(255,255,255,.35);overflow:hidden;display:none}
+.prog b{display:block;height:100%;width:0;background:var(--cap)}
+.ctl{position:absolute;left:10px;right:10px;bottom:10px;display:none;align-items:center;gap:10px;background:rgba(21,23,29,.72);backdrop-filter:blur(6px);padding:6px 14px 6px 6px;border-radius:999px}
+.ctl button{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.14);cursor:pointer;display:grid;place-items:center}
+.ctl svg{width:18px;height:18px;fill:#fff}
+.ctl .off{display:none}
+.player.mute .ctl .on{display:none}
+.player.mute .ctl .off{display:block}
+.ctl input{flex:1;min-width:0;accent-color:var(--cap);height:4px;cursor:pointer}
+.no-vol .ctl{right:auto;padding-right:6px}
+.no-vol .ctl input{display:none}
+.player.live .play{display:none}
+.player.live .prog{display:block}
+.player.live .ctl{display:flex}
+.player{transition:filter .3s,transform .3s}
+.player.paused::after{content:"";position:absolute;inset:0;margin:auto;width:0;height:0;border-left:34px solid rgba(255,255,255,.9);border-top:22px solid transparent;border-bottom:22px solid transparent;pointer-events:none}
+body.focus .player:not(.live){filter:brightness(.55) saturate(.5)}
+.clip .player.live{transform:scale(1.03)}
+.hero .screen{max-width:360px;justify-self:end;width:100%;transform:rotate(1.6deg)}
+
+/* линейка монтажной дорожки */
+.ruler{height:26px;border-top:2px solid var(--ink);background:
+  repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 120px),
+  repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 24px);
+  background-size:auto 14px,auto 8px;background-repeat:repeat-x}
+
+/* работы */
+.works{padding:64px 0 24px}
+.group{margin-bottom:64px}
+.group-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 32px;margin-bottom:26px}
+.group-head p{color:var(--mute);max-width:32em}
+.reel-row{display:grid;gap:22px}
+.reel-row.three{grid-template-columns:repeat(3,minmax(0,250px))}
+.reel-row.four{grid-template-columns:repeat(4,minmax(0,250px))}
+.clip figcaption{padding:14px 2px 0}
+.clip b{display:block;font-weight:700;font-size:16px;line-height:1.3}
+.clip small{display:block;color:var(--mute);font-size:14.5px;line-height:1.4;margin-top:4px}
+
+/* порядок работы */
+.how{background:var(--sheet);padding:72px 0}
+.steps{list-style:none;margin:36px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:28px;counter-reset:s}
+.steps li{counter-increment:s;border-top:2px solid var(--ink);padding-top:16px}
+.steps li::before{content:counter(s);font-family:Unbounded,sans-serif;font-weight:800;font-size:30px;display:block;margin-bottom:10px}
+.steps b{display:block;font-size:18px;margin-bottom:6px}
+.steps span{color:var(--mute);font-size:16px}
+
+/* цены */
+.prices{padding:72px 0}
+.price-list{margin:32px 0 0;border-top:2px solid var(--ink)}
+.price{display:grid;grid-template-columns:1fr auto;gap:6px 32px;padding:22px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.price b{font-size:20px}
+.price span{grid-column:1;color:var(--mute);max-width:36em}
+.price em{grid-row:1;grid-column:2;font-style:normal;font-family:Unbounded,sans-serif;font-weight:600;font-size:clamp(18px,2vw,24px);white-space:nowrap}
+.price.main b::after{content:"most popular";font:500 13px/1 Onest,sans-serif;background:var(--cap);padding:5px 9px;border-radius:6px;margin-left:12px;vertical-align:middle;white-space:nowrap}
+
+/* конец */
+.end{background:var(--ink);color:#fff;padding:80px 0}
+.end .wrap{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center}
+.end h2{font-size:clamp(26px,3.8vw,46px);font-weight:800}
+.end p{color:#AEB5C2;margin-top:14px;max-width:30em}
+.end .btn{background:var(--cap);color:var(--ink)}
+.end .btn:hover{background:#FFE75C}
+
+@media (max-width:900px){
+  .top nav{display:none}
+  .hero{grid-template-columns:1fr;gap:36px;padding:12px 0 52px}
+  .hero .screen{justify-self:start;max-width:300px}
+  .reel-row.three,.reel-row.four{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:62%;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -24px;padding:0 24px 12px;scrollbar-width:none}
+  .reel-row::-webkit-scrollbar{display:none}
+  .clip{scroll-snap-align:center}
+  .steps{grid-template-columns:1fr 1fr}
+  .end .wrap{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  body{font-size:16px}
+  .wrap{padding:0 18px}
+  .reel-row.three,.reel-row.four{margin:0 -18px;padding:0 18px 12px}
+  .steps{grid-template-columns:1fr}
+  .price{grid-template-columns:1fr}
+  .price em{grid-row:auto;grid-column:1}
+  .price.main b::after{display:table;margin:8px 0 0}
+  .btn{width:100%;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .btn,h1 .w{transition:none}
+}
+.disc{font:inherit;font-weight:700;background:none;border:0;padding:0;color:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.end .note{margin-top:18px;font-size:15px}
+</style>
+</head>
+<body>
+
+<header class="wrap top">
+  <a class="name" href="#">Danil, shorts editor</a>
+  <nav>
+    <a href="#works">Work</a>
+    <a href="#how">How it works</a>
+    <a href="#contact">Contact</a>
+    <a href="../" lang="ru">Русский</a>
+  </nav>
+</header>
+
+<main>
+<section class="wrap hero">
+  <div>
+    <h1 id="h1">Podcast moments, cut into shorts people finish</h1>
+    <p class="lead">Send me a long episode or raw talking-head footage. I find the moments that stand on their own and turn them into vertical shorts: a hook in the first seconds, captions word by word, motion text that shows exactly what is being said, sound and music.</p>
+    <div class="hero-cta">
+      <a class="btn" href="#contact">Get a free test short</a>
+      <span>First short is free, on your own footage. If it doesn’t fit, no hard feelings.</span>
+    </div>
+  </div>
+  <figure class="screen player" style="margin:0" data-id="en1" data-hero data-label="Watch “Is $150K a year worth it?” with sound" data-len="0:45"></figure>
+</section>
+
+<div class="ruler" aria-hidden="true"></div>
+
+<section class="works wrap" id="works">
+  <div class="group">
+    <div class="group-head">
+      <h2>Podcast shorts</h2>
+      <p>Three moments from one long episode, each one works on its own. Cut from a public episode as samples: the guest and the show are not my clients.</p>
+    </div>
+    <div class="reel-row three">
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="en1" data-label="Watch “Is $150K a year worth it?”" data-len="0:45"></div>
+        <figcaption><b>Is $150K a year worth it?</b><small>Opening title, captions word by word, motion text</small></figcaption>
+      </figure>
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="en2" data-label="Watch “One week beat a year's salary?”" data-len="0:45"></div>
+        <figcaption><b>One week beat a year’s salary?</b><small>Hook in the first seconds, motion text on key phrases</small></figcaption>
+      </figure>
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="en3" data-label="Watch “Would you yell at a child”" data-len="0:39"></div>
+        <figcaption><b>Would you yell at a child</b><small>Each word animates in as it is said</small></figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <h2>Talking-head reels</h2>
+      <p>A person talks to the camera, my job is to make it watched to the end: pace, captions, cards with numbers, punch-ins. These are for Russian-speaking clients, the editing is the same in any language.</p>
+    </div>
+    <div class="reel-row three">
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="kniga" data-label="Watch “The unfinished book”" data-len="0:39"></div>
+        <figcaption><b>The unfinished book</b><small>Number cards, a diagram, a chat screenshot full screen</small></figcaption>
+      </figure>
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="voda" data-label="Watch “AI that rambles”" data-len="0:39"></div>
+        <figcaption><b>AI that rambles</b><small>Word-by-word captions, every pause removed</small></figcaption>
+      </figure>
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="wifi" data-label="Watch “Wi-Fi twice as fast”" data-len="0:45"></div>
+        <figcaption><b>Wi-Fi twice as fast</b><small>Screen inserts, punch-ins on the main point</small></figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="group-head">
+      <h2>Shorts without filming</h2>
+      <p>No camera needed. From a text I build a story: images, animation, voice-over, captions. These four were made for the Sunlight program.</p>
+    </div>
+    <div class="reel-row four">
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="nagrada" data-label="Watch “A reward for prison”" data-len="0:35"></div>
+        <figcaption><b>A reward for prison</b><small>Story in pictures</small></figcaption>
+      </figure>
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="ozherelie" data-label="Watch “The necklace”" data-len="0:37"></div>
+        <figcaption><b>The necklace</b><small>Story in pictures</small></figcaption>
+      </figure>
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="kolco" data-label="Watch “The ring”" data-len="0:31"></div>
+        <figcaption><b>The ring</b><small>Infographics and numbers</small></figcaption>
+      </figure>
+      <figure class="clip" style="margin:0">
+        <div class="screen player" data-id="seif" data-label="Watch “The safe robbery”" data-len="0:33"></div>
+        <figcaption><b>The safe robbery</b><small>Investigation board</small></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><b>Send the footage</b><span>A Google Drive or Dropbox link. Raw is fine, with retakes and slips.</span></li>
+      <li><b>First shorts in 1–2 days</b><span>I’m in Korea (UTC+9), so a lot of the editing happens while it’s night in the US.</span></li>
+      <li><b>Revisions</b><span>Tell me what to change, I fix it. Revisions are included.</span></li>
+      <li><b>Your style, every time</b><span>Fonts, colors and caption style stay the same, so every short looks like your channel.</span></li>
+    </ol>
+  </div>
+</section>
+</main>
+
+<footer class="end" id="contact">
+  <div class="wrap">
+    <div>
+      <h2>Send one video for a free test</h2>
+      <p>I’ll cut one short from it. One short is enough to see if we fit. Rate per short or for a monthly batch, we agree after the test.</p>
+      <p class="note">Discord: <button type="button" class="disc" data-disc title="Click to copy">serial_chiller912</button></p>
+    </div>
+    <a class="btn" data-tg href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.9 4.3 18.7 19c-.2 1-.9 1.3-1.8.8l-4.900-3.600-2.400 2.300c-.3.3-.5.5-1 .5l.3-5 9-8.100c.4-.4-.1-.5-.6-.2L6.200 12.600 1.400 11.100c-1-.3-1-1 .2-1.500L20.500 2.400c.9-.3 1.700.2 1.400 1.900z"/></svg>Message on Telegram</a>
+  </div>
+</footer>
+
+<script>
+// ← сюда вписать ник аккаунта для клиентов (без @)
+const TELEGRAM = "danil912";
+document.querySelectorAll("[data-tg]").forEach(a => { a.href = "https://t.me/" + TELEGRAM; a.target = "_blank"; a.rel = "noopener"; });
+
+// заголовок проходит подсветкой по словам — как субтитры в ролике
+const h1 = document.getElementById("h1");
+h1.innerHTML = h1.textContent.trim().split(" ").map(w => `<span class="w">${w}</span>`).join(" ");
+const words = [...h1.querySelectorAll(".w")];
+function captions() {
+  words.forEach((w, i) => {
+    setTimeout(() => { words.forEach(x => x.classList.remove("on")); w.classList.add("on"); }, 500 + i * 420);
+  });
+}
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) words[words.length - 1].classList.add("on");
+else captions();
+
+// ролики: без звука играют сами, пока видны; по нажатию — полный ролик со звуком
+let VOL = 0.35;
+try { const x = parseFloat(localStorage.getItem("vol")); if (x >= 0 && x <= 1) VOL = x; } catch (e) {}
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const probe = document.createElement("video"); probe.volume = 0.5;
+if (probe.volume !== 0.5) document.body.classList.add("no-vol");   // на айфоне громкость только кнопками телефона
+const ICON_ON = '<svg class="on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.500 3A4.500 4.500 0 0 0 14 8v8a4.500 4.500 0 0 0 2.500-4zM14 3.200v2.100a7 7 0 0 1 0 13.400v2.100a9 9 0 0 0 0-17.600z"/></svg>';
+const ICON_OFF = '<svg class="off" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm18.600 0L20.200 7.600 18 9.800l-2.200-2.200L14.400 9l2.200 2.200-2.200 2.200 1.400 1.400 2.200-2.200 2.200 2.200 1.400-1.400-2.200-2.200z"/></svg>';
+const players = [];
+
+function makePlayer(box) {
+  const id = box.dataset.id, hero = "hero" in box.dataset;
+  const full = `../media/${id}.mp4`, prev = hero ? full : `../media/${id}-p.mp4`;
+  box.innerHTML = `<video muted loop playsinline preload="${hero ? "auto" : "none"}" poster="../media/${id}.jpg" src="${prev}"></video>
+    <button type="button" class="hit" aria-label="${box.dataset.label}"></button>
+    <span class="play"><i></i>${hero ? "Sound on" : box.dataset.len}</span>
+    <div class="prog"><b></b></div>
+    <div class="ctl"><button type="button" aria-label="Sound">${ICON_ON}${ICON_OFF}</button>
+    <input type="range" min="0" max="1" step="0.05" aria-label="Volume"></div>`;
+  const v = box.querySelector("video"), bar = box.querySelector(".prog b"), range = box.querySelector("input");
+  v.muted = true;
+  const p = { box, v, visible: false,
+    live() {
+      players.forEach(o => o !== p && o.quiet());
+      if (!hero) v.src = full;
+      v.loop = false; v.currentTime = 0; v.volume = VOL; v.muted = VOL === 0; range.value = VOL;
+      box.classList.add("live"); box.classList.toggle("mute", v.muted); box.classList.remove("paused");
+      document.body.classList.add("focus"); v.play();
+    },
+    quiet() {
+      if (!box.classList.contains("live")) return;
+      box.classList.remove("live", "paused", "mute"); v.muted = true; v.loop = true;
+      if (!hero) v.src = prev;
+      if (!players.some(o => o.box.classList.contains("live"))) document.body.classList.remove("focus");
+      p.auto();
+    },
+    auto() {
+      if (box.classList.contains("live")) return;
+      if (p.visible && !calm) v.play().catch(() => {}); else v.pause();
+    } };
+  box.querySelector(".hit").addEventListener("click", () => {
+    if (!box.classList.contains("live")) return p.live();
+    if (v.paused) { v.play(); box.classList.remove("paused"); } else { v.pause(); box.classList.add("paused"); }
+  });
+  box.querySelector(".ctl button").addEventListener("click", () => { v.muted = !v.muted; box.classList.toggle("mute", v.muted); });
+  range.addEventListener("input", () => {
+    VOL = +range.value; v.volume = VOL; v.muted = VOL === 0; box.classList.toggle("mute", v.muted);
+    try { localStorage.setItem("vol", VOL); } catch (e) {}
+  });
+  v.addEventListener("timeupdate", () => { if (v.duration) bar.style.width = (v.currentTime / v.duration * 100) + "%"; });
+  v.addEventListener("ended", () => p.quiet());
+  players.push(p);
+  return p;
+}
+document.querySelectorAll(".player").forEach(makePlayer);
+const io = new IntersectionObserver(es => es.forEach(e => {
+  const p = players.find(o => o.box === e.target);
+  p.visible = e.intersectionRatio >= 0.5;
+  if (!p.visible && p.box.classList.contains("live")) p.quiet(); else p.auto();
+}), { threshold: [0, 0.5, 1] });
+players.forEach(p => io.observe(p.box));
+document.addEventListener("keydown", e => { if (e.key === "Escape") players.forEach(p => p.quiet()); });
+
+// Discord: copy username on click
+document.querySelectorAll("[data-disc]").forEach(b => b.addEventListener("click", () => {
+  navigator.clipboard && navigator.clipboard.writeText("serial_chiller912").then(() => {
+    const t = b.textContent; b.textContent = "copied"; setTimeout(() => b.textContent = t, 1400);
+  });
+}));
+</script>
+</body>
+</html>
